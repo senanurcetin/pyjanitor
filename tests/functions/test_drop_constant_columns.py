@@ -57,6 +57,7 @@ def test_drop_constant_columns_nullable_dtypes(dtype, values):
     )
     assert_frame_equal(df.drop_constant_columns(), df[["value_with_missing"]])
 
+
 @pytest.mark.functions
 def test_drop_constant_columns_mixed_missing_sentinels():
     """Different object-dtype null markers count as one missing value."""
