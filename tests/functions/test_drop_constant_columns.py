@@ -56,3 +56,31 @@ def test_drop_constant_columns_nullable_dtypes(dtype, values):
         }
     )
     assert_frame_equal(df.drop_constant_columns(), df[["value_with_missing"]])
+
+@pytest.mark.functions
+def test_drop_constant_columns_mixed_missing_sentinels():
+    """Different object-dtype null markers count as one missing value."""
+    df = pd.DataFrame(
+        {
+            "all_missing": pd.Series([None, float("nan"), pd.NA], dtype=object),
+            "value_with_missing": pd.Series(
+                ["A", None, float("nan")], dtype=object
+            ),
+            "constant": [1, 1, 1],
+            "varying": [1, 2, 3],
+        }
+    )
+    original = df.copy(deep=True)
+
+    assert_frame_equal(
+        df.drop_constant_columns(), df[["value_with_missing", "varying"]]
+    )
+    assert_frame_equal(df, original)
+
+
+@pytest.mark.functions
+def test_drop_constant_columns_empty_dataframe():
+    """Keep columns if no rows are available to establish constants."""
+    df = pd.DataFrame(columns=["a", "b"])
+
+    assert_frame_equal(df.drop_constant_columns(), df)
