@@ -1,10 +1,13 @@
-"""Independent QA loader: execute production pivot functions without optional package imports.
+# ruff: noqa: F401
+# These globals are referenced by production functions compiled via AST.
+"""Independent QA loader for production pivot functions.
 
 The project requires a newer pandas build than this Windows QA host currently
 provides. This AST extraction exercises the unmodified function bodies from
 janitor/functions/pivot.py, with non-pivot package decorators removed. It is NOT
 a substitute for upstream end-to-end pytest or CI.
 """
+
 from __future__ import annotations
 
 import ast
