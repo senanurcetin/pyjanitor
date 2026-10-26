@@ -4,14 +4,23 @@ No modifications to the active contribution branch. This suite compares
 production fast code with the legacy path on the same git revision and checks
 that modifying a returned frame cannot mutate its source DataFrame.
 """
+
 import numpy as np
 import pandas as pd
+import pivot_source_loader as pivot
 import pytest
 from pandas.testing import assert_frame_equal
 
-import pivot_source_loader as pivot
-
-DTYPES = ("float16", "complex128", "uint64", "object", "datetime64[ns]", "timedelta64[ns]", "bool", "Int64")
+DTYPES = (
+    "float16",
+    "complex128",
+    "uint64",
+    "object",
+    "datetime64[ns]",
+    "timedelta64[ns]",
+    "bool",
+    "Int64",
+)
 
 
 def make_frame(n_rows, dtype, n_cols):
@@ -41,25 +50,41 @@ def make_frame(n_rows, dtype, n_cols):
             else:
                 arr[:, col] = [j + 0.5 for j in range(n_rows)]
     elif dtype == "datetime64[ns]":
-        arr = (data.astype("timedelta64[D]") + np.datetime64("2024-01-01")).astype("datetime64[ns]")
+        arr = (data.astype("timedelta64[D]") + np.datetime64("2024-01-01")).astype(
+            "datetime64[ns]"
+        )
     elif dtype == "timedelta64[ns]":
         arr = data.astype("timedelta64[ns]")
     elif dtype == "Int64":
         return pd.DataFrame(data, columns=cols).astype("Int64")
     else:
         raise AssertionError(dtype)
-    return pd.DataFrame(arr, columns=cols, dtype="object" if dtype == "object" else None)
+    return pd.DataFrame(
+        arr, columns=cols, dtype="object" if dtype == "object" else None
+    )
 
 
 def spec_for(columns, with_other):
     num = len(columns)
     if with_other:
         # Deliberately uneven groups, but every (value, part) is unique.
-        pairs = [("a", "q"), ("b", "q"), ("a", "r"), ("c", "q"),
-                 ("b", "r"), ("a", "s"), ("c", "r"), ("b", "s")]
-        spec = pd.DataFrame({".name": columns,
-                             ".value": [p[0] for p in pairs[:num]],
-                             "part": [p[1] for p in pairs[:num]]})
+        pairs = [
+            ("a", "q"),
+            ("b", "q"),
+            ("a", "r"),
+            ("c", "q"),
+            ("b", "r"),
+            ("a", "s"),
+            ("c", "r"),
+            ("b", "s"),
+        ]
+        spec = pd.DataFrame(
+            {
+                ".name": columns,
+                ".value": [p[0] for p in pairs[:num]],
+                "part": [p[1] for p in pairs[:num]],
+            }
+        )
     else:
         groups = ["a", "b", "a", "c", "b", "a", "c", "b"]
         spec = pd.DataFrame({".name": columns, ".value": groups[:num]})
@@ -70,13 +95,18 @@ def spec_for(columns, with_other):
 @pytest.mark.parametrize("with_other", [False, True])
 @pytest.mark.parametrize("sort_by_appearance", [False, True])
 @pytest.mark.parametrize("rows", [0, 1, 5])
-def test_numpy_dtype_boundaries_match_legacy(monkeypatch, dtype, with_other, sort_by_appearance, rows):
+def test_numpy_dtype_boundaries_match_legacy(
+    monkeypatch, dtype, with_other, sort_by_appearance, rows
+):
     columns = 5 if with_other else 7
     frame = make_frame(rows, dtype, columns)
     before = frame.copy(deep=True)
     spec = spec_for(list(frame.columns), with_other)
-    options = {"sort_by_appearance": sort_by_appearance,
-               "dropna": rows % 2 == 0, "ignore_index": rows != 1}
+    options = {
+        "sort_by_appearance": sort_by_appearance,
+        "dropna": rows % 2 == 0,
+        "ignore_index": rows != 1,
+    }
 
     with monkeypatch.context() as patched:
         patched.setattr(pivot, "_fast_numpy_value_matrix", lambda df: None)
@@ -86,7 +116,18 @@ def test_numpy_dtype_boundaries_match_legacy(monkeypatch, dtype, with_other, sor
     assert_frame_equal(frame, before)
 
 
-@pytest.mark.parametrize("dtype", ["float16", "complex128", "uint64", "object", "datetime64[ns]", "timedelta64[ns]", "bool"])
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        "float16",
+        "complex128",
+        "uint64",
+        "object",
+        "datetime64[ns]",
+        "timedelta64[ns]",
+        "bool",
+    ],
+)
 @pytest.mark.parametrize("with_other", [False, True])
 def test_output_mutation_never_alters_input(dtype, with_other):
     frame = make_frame(3, dtype, 5 if with_other else 7)
