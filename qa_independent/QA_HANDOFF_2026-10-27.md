@@ -28,8 +28,10 @@ It has no effect on the code being tested.
 
 Observed result: **122 passed** (2.43 seconds in the final run).
 `python -m compileall -q qa_independent` also passed.
-The Ruff executable was not present on PATH, so *no successful Ruff check is
-claimed*. Full pyjanitor package tests were not run in this environment.
+The Ruff executable was not on PATH, but the global Python installation
+provided `python -m ruff`. After formatting, both `ruff check` and
+`ruff format --check` passed for both QA Python files; the 122-case suite
+was rerun and passed (2.69 seconds). Full pyjanitor package tests were not run in this environment.
 
 ## Precisely what the 122 cases assert
 
